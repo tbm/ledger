@@ -1,0 +1,22 @@
+on:
+  - push
+  - pull_request
+jobs:
+  test:
+    name: Unit Tests
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - if: matrix.os == 'macos-latest'
+        run: brew install gmp mpfr boost boost-python3
+      - if: matrix.os == 'ubuntu-latest'
+        run: sudo apt install libgmp-dev libmpfr-dev libedit-dev libboost-dev libboost-test-dev libboost-regex-dev libboost-python-dev libboost-system-dev libboost-date-time-dev libboost-iostreams-dev libboost-filesystem-dev libboost-serialization-dev
+      - run: cmake . -DUSE_PYTHON=ON -DPython_FIND_VERSION_MAJOR=3 -DBUILD_DEBUG=ON $EXTRA_CMAKE_ARGS
+      - run: make VERBOSE=1
+      - run: ctest --output-on-failure
